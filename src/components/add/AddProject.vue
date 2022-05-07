@@ -15,7 +15,7 @@
                     <div class="col-9 mb-3">
                         <select v-model="project.client" class="form-select form-select-md">
                             <option value=""></option>
-                            <option v-for="cl in clients" :key="cl._id" :value="cl.nom">{{cl.nom}}</option>
+                            <option v-for="cl in getClients" :key="cl._id" :value="cl.nom">{{cl.nom}}</option>
                         </select>
                     </div>
                 </div>
@@ -93,6 +93,7 @@
 
 <script>
 import axios from "axios";
+import { mapGetters,mapActions } from "vuex";
 import Swal from 'sweetalert2'
 
 export default {
@@ -111,10 +112,9 @@ export default {
             error:'',
             loading:false,
             show_garantie:false,
-            // 
-            clients:[]
         }
     },
+    computed:mapGetters(['getClients']),
     methods:{
         goHome(){
             this.$router.push("/")
@@ -157,17 +157,16 @@ export default {
                 this.show_garantie=false
             }
         },
-        getClientsAll(){
-             axios.get('http://localhost:8888/clients')
-            .then(res=>{this.clients=res.data})
-            .catch(err=>console.log(err))
-        }
+        ...mapActions(['fetchAllClients']),
     },
     mounted(){
         if(sessionStorage.getItem('id')===null){
             this.$router.push('/auth')
         }
-       this.getClientsAll()
+       this.fetchAllClients()
+       .catch(err=>{
+            console.log(err);
+        })
     }
 }
 </script>

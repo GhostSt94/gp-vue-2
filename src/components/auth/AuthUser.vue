@@ -70,11 +70,10 @@ export default {
                 this.err="Password doesn't match"
                 return
             }
-            const credentiels={
+            axios.post(this.url+"register",{
                 username:this.username,
                 password:this.password
-            }
-            axios.post(this.url+"register",credentiels)
+            })
             .then(res=>{
                 console.log(res.data);
                 this.err=""
@@ -90,11 +89,10 @@ export default {
                 this.err="Veuillez remplir tous les champs"
                 return
             }
-            const credentiels={
+            axios.post(this.url+"login",{
                 username:this.username,
                 password:this.password
-            }
-            axios.post(this.url+"login",credentiels)
+            })
             .then(res=>{
                 console.log(res.data);
                 this.err=""
@@ -109,6 +107,8 @@ export default {
                 })
         },
         toggleLogin(bool){
+            this.username="",
+            this.password="",
             this.msg=""
             this.err=""
             this.login=bool

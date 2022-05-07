@@ -139,7 +139,6 @@
 </template>
 
 <script>
-// import EventBus from "@vertx/eventbus-bridge-client.js";
 import axios from "axios";
 import FactureModal from "./project-details/FactureModal.vue";
 import ProjectFileModal from "./project-details/ProjectFileModal.vue";
@@ -291,7 +290,7 @@ export default {
                 console.log(err.response);
                 this.error_facture=err.response.data
             })
-        }
+        },
     },
     mounted(){
         if(sessionStorage.getItem('id')===null){

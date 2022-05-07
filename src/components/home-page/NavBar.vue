@@ -19,14 +19,15 @@
 </template>
 
 <script>
+
 export default {
     name:"NavBar",
     methods:{
         logout(){
             sessionStorage.clear()
             location.reload()
-        }
-    }
+        },
+    },
 }
 </script>
 
