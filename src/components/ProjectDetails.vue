@@ -1,4 +1,5 @@
 <template>
+
     <i v-if="loading" class="fa-solid fa-circle-notch fa-spin mx-3 fa-2xl position-absolute start-50 top-50 translate-middle"></i>
     <div v-else class="container-fluid">
         <div v-if="not_found" class="position-absolute start-50 top-50 translate-middle text-center">
@@ -6,9 +7,9 @@
             <router-link to="/">Home</router-link>
         </div>
         <div v-else class="container pt-5">
-            <div class="row justify-content-evenly mb-4">
+            <div class="row justify-content-between mb-4">
                 <div class="col-md-8 bg-white py-3 rounded shadow-sm">
-                    <i @click="back" class="fa-solid fa-arrow-left-long float-start text-secondary back"></i>
+                    <i @click="goHome" class="fa-solid fa-arrow-left-long float-start text-secondary back"></i>
                     <div class="float-end">
                         <i v-if="!updating" @click="toggleUpdate" class="fa-solid fa-pen-to-square fa-lg text-warning m-3"></i>
                         <i v-else @click="toggleUpdate" class="fa-solid fa-xmark fa-lg m-3"></i>
@@ -25,7 +26,7 @@
                             <input v-if="updating" type="text" class="form-control" v-model="project.client">
                             <span v-else class="h5 fw-bold">{{project.client}}</span>
                         </div>
-                        <div class="col-12 mb-3">
+                        <div class="col-12 mb-3 date">
                             <table class="table table-borderless">                                
                                 <tbody>
                                     <tr class="text-muted">
@@ -119,21 +120,37 @@
                             <tr v-for="facture in factures" :key="facture._id">
                                 <td class="text-success fw-bold">{{facture.date}}</td>
                                 <td>{{facture.montant}} DH</td>
-                                <td>{{facture.status}}</td>
+                                <td class="text-center">
+                                    <select v-if="updating_facture" v-model="new_facture_status" class="form-select form-select-sm w-75" aria-label="status">
+                                        <option value="prévu">Prévu</option>
+                                        <option value="envoyer">Envoyer</option>
+                                        <option value="payer">Payer</option>
+                                    </select>
+                                    <span v-else>{{facture.status}}</span>
+                                </td>
                                 <td>
                                     <a v-if="facture.file!=''" v-bind:href="'http://localhost:8888/files/facture/'+facture.file" target="_blank">
                                         <i class="fa-solid fa-file-pdf"></i>
                                     </a>
                                     <span v-else>...</span>
                                 </td>
-                                <td><i  @click="(e)=>deleteFacture(e,facture._id)" title="supprimer facture" class="fa-solid fa-xmark text-muted opacity-25"></i></td>
+                                <td>
+                                    <div v-if="updating_facture">
+                                        <i  @click="toggleUpdateFacture" title="supprimer facture" class="fa-solid fa-xmark text-muted opacity-25"></i>
+                                        <i  @click="updateFacture(facture._id)" class="fa-solid fa-check opacity-25 ms-2"></i>
+                                    </div>
+                                    <div v-else>
+                                        <i @click="toggleUpdateFacture" class="fa-solid fa-pen-to-square text-warning opacity-25"></i>
+                                        <i @click="(e)=>deleteFacture(e,facture._id)" title="supprimer facture" class="fa-solid fa-xmark text-muted opacity-25 ms-2"></i>
+                                    </div>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
-    </div>
+    </div><Toast /><ConfirmDialog />
     <FactureModal @get-factures="getFacturesAll"/>
     <ProjectFileModal @get-project="getProject"/>
 </template>
@@ -143,11 +160,13 @@ import axios from "axios";
 import FactureModal from "./project-details/FactureModal.vue";
 import ProjectFileModal from "./project-details/ProjectFileModal.vue";
 import Swal from "sweetalert2"
+import Toast from 'primevue/toast';
+import ConfirmDialog from 'primevue/confirmdialog';
 
 export default {
     name:"ProjectDetails",
     components:{
-        FactureModal,ProjectFileModal
+        FactureModal,ProjectFileModal,Toast,ConfirmDialog
     },
     data(){
         return{
@@ -166,20 +185,25 @@ export default {
             loading:true,
             not_found:false,
             updating:false,
+            updating_facture:false,
             factures:[],
-            files:[],
+            new_facture_status:null,
+            // files:[],
             show_garantie:null,
-            // 
             error:'',
             error_facture:''
         }
     },
     methods:{
-        back(){
+        goHome(){
             this.$router.push("/")
         },
         toggleUpdate(){
             this.updating=!this.updating
+        },
+        toggleUpdateFacture(){
+            this.updating_facture=!this.updating_facture
+            console.log(this.updating_facture);
         },
         // display garantie field if type commande is bon de commande
         toggleGarantie(){
@@ -189,34 +213,39 @@ export default {
                 this.show_garantie=false
             }
         },
+        toastSuccess(msg){
+            this.$toast.add({severity:'success', summary: msg, life: 2000})
+        },
+        toastError(err){
+            this.$toast.add({severity:'error', summary:"Error",detail: err, life: 2000})
+        },
+        //
         deleteProject(){
-            Swal.fire({
-                title: 'Supprimer ce projet ?',
-                showCancelButton: true,
-                confirmButtonText: 'Confirmer',
-            }).then((result) => {
-                if (result.isConfirmed) {
+            this.$confirm.require({
+                message:'Suprrimer ce projet ?',
+                header: 'Confirmation',
+                icon:"pi pi-exclamation-triangle",
+                accept:()=>{
                     axios.delete(`http://localhost:8888/projects/${this.project._id}`)
                     .then(res=>{
                         console.log(res.data);
-                        Swal.fire('Projet Supprimé')
+                        this.toastSuccess('Projet Supprimé')
                         this.$router.push("/")
                     })
                     .catch(err=>{
                         console.log(err.response)
-                        Swal.fire(err.response.data)
+                        this.toastError(err)
                     })
                 } 
             })
             
         },
         updateProject(){
-            Swal.fire({
-                title: 'Modifier ce projet ?',
-                showCancelButton: true,
-                confirmButtonText: 'Confirmer',
-                }).then((result) => {
-                    if (result.isConfirmed) {
+            this.$confirm.require({
+                message:'Modifier ce projet ?',
+                header: 'Confirmation',
+                icon:"pi pi-exclamation-triangle",
+                accept:()=>{
                         if(!this.show_garantie){
                             this.project.garantie=null
                         }else{
@@ -227,15 +256,28 @@ export default {
                         .then(res=>{
                             console.log(res.data);
                             this.updating=false;
-                            Swal.fire('Projet Modifié')
+                            this.toastSuccess('Projet modifié')
                             this.getProject()
                         })
                         .catch(err=>{
                             console.log(err.response);
-                            Swal.fire(err.response.data)
+                            this.toastError(err)
                         })
                     } 
                 })
+        },
+        updateFacture(id){
+            axios.put(`http://localhost:8888/factures/${id}`,{status:this.new_facture_status})
+            .then(res=>{
+                console.log(res.data);
+                this.toastSuccess('Facture Modifié')
+                this.updating_facture=false
+                this.getFacturesAll()
+            })
+            .catch(err=>{
+                console.log(err.response);
+                this.toastError(err)
+            })
         },
         deleteFacture(e,id){
             Swal.fire({
@@ -247,11 +289,12 @@ export default {
                         axios.delete(`http://localhost:8888/factures/${id}`)
                         .then(res=>{
                             console.log(res.data);
+                            this.toastSuccess('Facture supprimé')
                             e.target.closest('tr').remove()
                         })
                         .catch(err=>{
                             console.log(err.response);
-                            alert(err.response.data)
+                            this.toastError(err)
                         })
                     } 
                 })
@@ -261,11 +304,11 @@ export default {
             .then(res=>{
                 console.log(res.data);
                 this.project.file=null
-                Swal.fire("file removed")
+                this.toastSuccess('Fichier Supprimé')
             })
             .catch(err=>{
                 console.log(err.response);
-                Swal.fire(err.response.data)
+                this.toastError(err)
             })
         },
         getProject(){
@@ -282,7 +325,7 @@ export default {
             })
         },
         getFacturesAll(){
-            axios.get(`http://localhost:8888/factures/${this.project._id}`)
+            axios.get(`http://localhost:8888/factures/project/${this.project._id}`)
             .then(res=>{
                 this.factures=res.data
             })
@@ -290,27 +333,29 @@ export default {
                 console.log(err.response);
                 this.error_facture=err.response.data
             })
-        },
+        }
     },
     mounted(){
         if(sessionStorage.getItem('id')===null){
             this.$router.push('/auth')
+        }else{
+            this.getProject()
+            this.getFacturesAll()
         }
-        this.getProject()
-        this.getFacturesAll()
     }
 }
 </script>
 
-<style>
-    .fa-solid:hover{
-        cursor: pointer;
-    }
+<style scoped>
     .list-group{
         max-height: 250px;
         overflow-y: scroll;
     }
-    .fa-xmark:hover{
+    .opacity-25:hover{
         opacity: 1 !important;
     }
+    .date{
+        cursor: default;
+    }
+    hr{color: gray;padding: 0;}
 </style>

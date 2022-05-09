@@ -11,7 +11,9 @@
                 <div class="navbar-nav">
                     <router-link class="nav-link rounded" to="/ajouter/projet">Nouveau Projet</router-link>
                     <router-link class="nav-link rounded" to="/clients">Liste des Clients</router-link>
-                    <router-link @click="logout" class="nav-link rounded" to="/">Logout</router-link>
+                    <router-link @click="logout" class="nav-link rounded" to="/">
+                        Logout<i class="fa-solid fa-arrow-right-from-bracket ms-1"></i>
+                    </router-link>
                 </div>
             </div>
         </div>

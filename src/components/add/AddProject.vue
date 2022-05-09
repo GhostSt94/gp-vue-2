@@ -1,87 +1,59 @@
 <template>
   <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-md-6 mt-4 py-4 px-3 rounded shadow">
+        <div class="row justify-content-center mx-1">
+            <div class="col-md-6 mt-4 py-4 px-3 rounded shadow bg-light">
                 <i @click="goHome" class="fa-solid fa-arrow-left-long float-start text-secondary back"></i>
-                <h3 class="text-center p-2">Ajouter project</h3>
-                <div class="form-floating mb-3">
-                    <input v-model="project.nom" type="text" class="form-control" id="floatingInput1" >
-                    <label for="floatingInput1">Nom</label>
-                </div>
-                <div class="row mb-3">
-                    <div class="col-3 mb-3">
-                        Client
+                <h3 class="text-center p-2 color-1">Ajouter project</h3>
+                <hr>
+                <div class="row g-3">
+                    <div class="col-md-6 form-floating">
+                        <input v-model="project.nom" type="text" class="form-control">
+                        <label>Nom</label>
                     </div>
-                    <div class="col-9 mb-3">
+                    <div class="col-md-6 form-floating">
                         <select v-model="project.client" class="form-select form-select-md">
                             <option value=""></option>
                             <option v-for="cl in getClients" :key="cl._id" :value="cl.nom">{{cl.nom}}</option>
                         </select>
+                        <label>Client</label>
                     </div>
-                </div>
-                
-                <div class="row">
-                    <div class="col">
-                        <div class="form-floating mb-3">
-                            <input v-model="project.date_debut" type="date" class="form-control" id="floatingInput3">
-                            <label for="floatingInput3">Date debut</label>
-                        </div>
+                    <div class="col-xs-6 col-6 form-floating">
+                        <input v-model="project.date_debut" type="date" class="form-control">
+                        <label>Date Debut</label>
                     </div>
-                    <div class="col">
-                        <div class="form-floating mb-3">
-                            <input v-model="project.date_fin" type="date" class="form-control" id="floatingInput4" >
-                            <label for="floatingInput4">Date fin</label>
-                        </div>
+                    <div class="col-xs-6 col-6 form-floating">
+                        <input v-model="project.date_fin" type="date" class="form-control">
+                        <label>Date Fin</label>
+                    </div> 
+                    <div class="col-xs-6 col-6  form-floating">
+                        <select @change="toggleGarantie" v-model="project.type_commande" class="form-select form-select-md">
+                            <option value="Marché">Marché</option>
+                            <option value="Bon de commande">Bon de commande</option>
+                            <option value="Marché cadre">Marché cadre</option>
+                        </select>
+                        <label>Type de commande</label>
                     </div>
-                </div>  
-                <div class="row my-4">
-                    <div class="col-md-5">
-                        <div class="row">
-                            <div class="col-3">
-                                Status
-                            </div>
-                            <div class="col-8">
-                                <select v-model="project.status" class="form-select form-select-md">
-                                    <option value="Prospecter">Prospecter</option>
-                                    <option value="En cours">En cours</option>
-                                    <option value="Reception provisoir">Reception provisoir</option>
-                                    <option value="Reception définitif">Reception définitif</option>
-                                    <option value="Cloturer">Cloturer</option>
-                                </select>
-                            </div>
-                        </div>
+                    <div class="col-xs-6 col-6 form-floating">
+                        <select v-model="project.status" class="form-select form-select-md">
+                            <option value=""></option>
+                            <option v-for="st in status" :key="st" :value="st">{{st}}</option>
+                        </select>
+                        <label>Status</label>
                     </div>
-                    <div class="col-md-7">
-                        <div class="row">
-                            <div class="col-md-4">
-                                Type de commande
-                            </div>
-                            <div class="col-md-8">
-                                <select @change="toggleGarantie" v-model="project.type_commande" class="form-select form-select-md">
-                                    <option value="Marché">Marché</option>
-                                    <option value="Bon de commande">Bon de commande</option>
-                                    <option value="Marché cadre">Marché cadre</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    
-                </div>
-                <div class="row">
-                    <div class="col">
-                        <div class="form-floating mb-3">
+                    <div class="col-md-6">
+                        <div class="form-floating">
                             <input v-model="project.montant" type="number" class="form-control" min="0" step="100" id="floatingInput5" >
                             <label for="floatingInput3">Montant DH</label>
                         </div>
                     </div>
-                    <div class="col">
-                        <div v-if="show_garantie" class="form-floating mb-3">
+                    <div class="col-md-6">
+                        <div v-if="show_garantie" class="form-floating">
                             <input v-model="project.garantie" type="number" class="form-control" min="0" step="100" id="floatingInput6">
                             <label for="floatingInput4">Garantie DH</label>
                         </div>
                     </div>
                 </div>
-                <div v-if="error!=''" class="alert alert-danger">{{error}}</div>
+                <div v-if="error!=''" class="col-md-12 alert alert-danger">{{error}}</div>
                 <div class="float-end">
                     <i v-if="loading" class="fa-solid fa-circle-notch fa-spin mx-3"></i>
                     <button @click="addProject" class="btn btn-primary">Ajouter</button>
@@ -97,21 +69,23 @@ import { mapGetters,mapActions } from "vuex";
 import Swal from 'sweetalert2'
 
 export default {
+    name:"AddProject",
     data(){
         return{
             project:{
-                nom:"",
-                client:"",
+                nom:null,
+                client:null,
                 date_debut:null,
                 date_fin:null,
-                status:"",
-                type_commande:"",
+                status:null,
+                type_commande:null,
                 montant:0,
                 garantie:0,
             },
             error:'',
             loading:false,
             show_garantie:false,
+            status:["Prospecter","En cours","Reception provisoir","Reception définitif","Cloturer"]
         }
     },
     computed:mapGetters(['getClients']),
@@ -171,9 +145,6 @@ export default {
 }
 </script>
 
-<style >
-    .back:hover{
-        cursor: pointer;
-        color: black !important;
-    }
+<style>
+    
 </style>
